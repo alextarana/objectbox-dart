@@ -28,7 +28,7 @@ class Config {
       String? outDirLib,
       String? outDirTest})
       : jsonFile = jsonFile ?? 'objectbox-model.json',
-        codeFile = codeFile ?? 'objectbox.g.dart',
+        codeFile = codeFile ?? 'objectbox.obx.dart',
         outDirLib = outDirLib ?? '',
         outDirTest = outDirTest ?? '';
 
