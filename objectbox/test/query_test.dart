@@ -37,7 +37,7 @@ void main() {
     ]);
 
     var query =
-        (box.query()..order(TestEntity_.tInt, flags: Order.descending)).build();
+        box.query().order(TestEntity_.tInt, flags: Order.descending).build();
     final listDesc = query.find();
     query.close();
 
@@ -269,13 +269,13 @@ void main() {
 
     final prop = TestEntity_.tStrings;
 
-    final qs0 = box.query(prop.contains('bar')).build();
+    final qs0 = box.query(prop.containsElement('bar')).build();
     expect(qs0.count(), 1);
 
-    final qs1 = box.query(prop.contains('ar')).build();
+    final qs1 = box.query(prop.containsElement('ar')).build();
     expect(qs1.count(), 0);
 
-    final qs2 = box.query(prop.contains('foo')).build();
+    final qs2 = box.query(prop.containsElement('foo')).build();
     expect(qs2.count(), 2);
 
     [qs0, qs1, qs2].forEach((q) => q.close());
@@ -358,12 +358,15 @@ void main() {
     box.put(TestEntity(tString: 't1'));
     box.put(TestEntity(tString: 't2'));
 
-    var query = box.query(TestEntity_.tString.startsWith('t')).build();
+    var query = box
+        .query(TestEntity_.tString.startsWith('t'))
+        .order(TestEntity_.iInt)
+        .build();
 
     expect(
         () => query.findUnique(),
-        throwsA(predicate((UniqueViolationException e) =>
-            e.toString().contains('more than one'))));
+        throwsA(predicate((NonUniqueResultException e) =>
+            e.message == 'Query findUnique() matched more than one object')));
 
     query.param(TestEntity_.tString).value = 't2';
     expect(query.findUnique()!.tString, 't2');
@@ -611,15 +614,16 @@ void main() {
 
     final condition = text.notNull();
 
-    final query = (box.query(condition)..order(text)).build();
+    final query = box.query(condition).order(text).build();
     final result1 = query.find().map((e) => e.tString).toList();
 
     expect('Cruel', result1[0]);
     expect('Hello', result1[2]);
     expect('HELLO', result1[3]);
 
-    final queryReverseOrder = (box.query(condition)
-          ..order(text, flags: Order.descending | Order.caseSensitive))
+    final queryReverseOrder = box
+        .query(condition)
+        .order(text, flags: Order.descending | Order.caseSensitive)
         .build();
     final result2 = queryReverseOrder.find().map((e) => e.tString).toList();
 
@@ -636,8 +640,8 @@ void main() {
       box.put(TestEntity(tLong: i, tInt: i));
     }
 
-    final querySigned = (box.query()..order(TestEntity_.tLong)).build();
-    final queryUnsigned = (box.query()..order(TestEntity_.tInt)).build();
+    final querySigned = box.query().order(TestEntity_.tLong).build();
+    final queryUnsigned = box.query().order(TestEntity_.tInt).build();
 
     expect(querySigned.findIds(), [1, 2, 3]);
     expect(queryUnsigned.findIds(), [2, 3, 1]);
